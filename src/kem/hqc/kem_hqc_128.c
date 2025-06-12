@@ -44,6 +44,7 @@ OQS_API OQS_STATUS OQS_KEM_hqc_128_keypair_derand(uint8_t *public_key, uint8_t *
 }
 
 OQS_API OQS_STATUS OQS_KEM_hqc_128_keypair(uint8_t *public_key, uint8_t *secret_key) {
+	printf(">>> CUSTOM DEBUG: OQS_KEM_hqc_128_keypair CALLED\n");
 	return (OQS_STATUS) PQCLEAN_HQC128_CLEAN_crypto_kem_keypair(public_key, secret_key);
 }
 
