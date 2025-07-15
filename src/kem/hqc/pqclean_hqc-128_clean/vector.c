@@ -4,6 +4,8 @@
 #include "vector.h"
 #include <stdint.h>
 #include <string.h>
+#include <oqs/common.h>   /* for OQS_API */
+#include "hqc_reducer.h"
 /**
  * @file vector.c
  * @brief Implementation of vectors sampling and some utilities for the HQC scheme
@@ -47,13 +49,34 @@ static inline uint32_t cond_sub(uint32_t r, uint32_t n) {
     return r + (n & mask);
 }
 
-static inline uint32_t reduce(uint32_t a, size_t i) {
+static inline uint32_t reduce_barrett(uint32_t a, size_t i) {
     uint32_t q, n, r;
     q = ((uint64_t) a * m_val[i]) >> 32;
     n = (uint32_t)(PARAM_N - i);
     r = a - q * n;
     return cond_sub(r, n);
+ }
+ 
+
+static inline uint32_t reduce_mulshift(uint32_t a, size_t i) {
+    uint32_t n = PARAM_N - (uint32_t)i;
+    return ((uint64_t)a * n) >> 32;
+ }
+
+
+/* selector: 1 = Barrett, 0 = Mul-Shift */
+static volatile int use_barrett_reducer = 1;
+OQS_API void hqc128_use_barrett(void)  { use_barrett_reducer = 1; }
+OQS_API void hqc128_use_mulshift(void) { use_barrett_reducer = 0; }
+
+/* this is called by the sampler code as before */
+static inline uint32_t reduce(uint32_t a, size_t i) {
+    return use_barrett_reducer
+         ? reduce_barrett(a, i)
+         : reduce_mulshift(a, i);
 }
+ 
+ 
 
 /**
  * @brief Generates a vector of a given Hamming weight
